@@ -33,7 +33,6 @@ jobs:
           images: kagamir/deltans
           tags: |
             type=ref,event=tag
-            type=semver,pattern={{version}}
 
       - name: Build and push
         uses: docker/build-push-action@v5
