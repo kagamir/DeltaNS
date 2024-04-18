@@ -4,7 +4,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"flag"
-	"fmt"
 	"os"
 
 	"github.com/kagamir/DeltaNS/proxy"
@@ -24,6 +23,7 @@ func getKey(password string) []byte {
 func main() {
 
 	// 定义命令行参数
+	loglevel := flag.String("loglevel", "info", "日志等级")
 	mode := flag.String("m", "", "启动模式，可以是 'proxy' 或 'server'")
 	serverAddr := flag.String("s", "localhost:5331", "服务器的IP地址和端口号")
 	localAddr := flag.String("l", "localhost:5330", "监听的IP地址和端口号")
@@ -34,9 +34,9 @@ func main() {
 	flag.Parse()
 
 	if *password == "" {
-		fmt.Println("错误：密码参数 -p 不能为空")
-		flag.Usage() // 打印用法信息
-		os.Exit(1)   // 退出程序
+		logrus.Println("错误：密码参数 -p 不能为空")
+		flag.Usage()
+		os.Exit(1)
 	}
 
 	logrus.SetFormatter(&logrus.TextFormatter{
@@ -45,6 +45,19 @@ func main() {
 	})
 	logrus.SetOutput(os.Stdout)
 	logrus.SetLevel(logrus.DebugLevel)
+
+	switch *loglevel {
+	case "info":
+		logrus.SetLevel(logrus.InfoLevel)
+	case "debug":
+		logrus.SetLevel(logrus.DebugLevel)
+	case "warn":
+		logrus.SetLevel(logrus.WarnLevel)
+	default:
+		logrus.Println("错误：日志等级[info, debug, warn]")
+		flag.Usage()
+		os.Exit(1)
+	}
 
 	key := getKey(*password)
 
