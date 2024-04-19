@@ -3,8 +3,9 @@ package common
 import (
 	"bytes"
 	"encoding/binary"
-	"log"
 	"time"
+
+	"github.com/sirupsen/logrus"
 )
 
 func CheckTime(timestampBytes []byte) bool {
@@ -14,10 +15,10 @@ func CheckTime(timestampBytes []byte) bool {
 	reader := bytes.NewReader(timestampBytes)
 	timestamp, err := binary.ReadVarint(reader)
 	if err != nil {
-		log.Println("timestampBytes Error: ", err)
+		logrus.Warnln("timestampBytes Error: ", err)
 		return false
 	}
-	log.Println("CheckTime", nowTimestamp, timestamp)
+	logrus.Debug("CheckTime", nowTimestamp, timestamp)
 	if nowTimestamp-timestamp < 60 {
 		return true
 	} else {
