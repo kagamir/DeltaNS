@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"encoding/base64"
 	"net"
 	"time"
 
@@ -79,7 +80,8 @@ func sentToServer(ciphertext []byte, key []byte, proxyConn *net.UDPConn, clientA
 
 	plaintext, err := common.Decrypt(buffer[:n], key)
 	if err != nil {
-		logrus.Errorln("解密出错:", err)
+		ciphertextB64 := base64.StdEncoding.EncodeToString(buffer[:n])
+		logrus.Errorln("解密出错:", err, "\n", ciphertextB64)
 		return err
 	}
 
