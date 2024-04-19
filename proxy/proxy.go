@@ -67,7 +67,7 @@ func sentToServer(ciphertext []byte, key []byte, proxyConn *net.UDPConn, clientA
 		return err
 	}
 
-	buffer := make([]byte, 1024)
+	buffer := make([]byte, 4096)
 	n, _, err := serverConn.ReadFromUDP(buffer)
 	if err != nil {
 		if err, ok := err.(net.Error); ok && err.Timeout() {
