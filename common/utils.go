@@ -18,7 +18,7 @@ func CheckTime(timestampBytes []byte) bool {
 		logrus.Warnln("timestampBytes Error: ", err)
 		return false
 	}
-	logrus.Debug("CheckTime", nowTimestamp, timestamp)
+	logrus.Debugln("CheckTime", nowTimestamp, timestamp)
 	if nowTimestamp-timestamp < 60 {
 		return true
 	} else {
