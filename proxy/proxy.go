@@ -37,6 +37,22 @@ func handle(data []byte, key []byte, proxyConn *net.UDPConn, clientAddr *net.UDP
 		return err
 	}
 
+	for i := 1; i <= 3; i++ {
+		err = sentToServer(ciphertext, key, proxyConn, clientAddr, server)
+		if err == nil {
+			break
+		}
+		logrus.Infoln(err, "Retry", i)
+	}
+	if err != nil {
+		logrus.Errorln(err)
+		return err
+	}
+
+	return nil
+}
+
+func sentToServer(ciphertext []byte, key []byte, proxyConn *net.UDPConn, clientAddr *net.UDPAddr, server *net.UDPAddr) error {
 	serverConn, err := getServerConn(server)
 	if err != nil {
 		logrus.Errorln("服务器错误:", err)
@@ -74,7 +90,6 @@ func handle(data []byte, key []byte, proxyConn *net.UDPConn, clientAddr *net.UDP
 	}
 
 	return nil
-
 }
 
 func getServerConn(server *net.UDPAddr) (*net.UDPConn, error) {
