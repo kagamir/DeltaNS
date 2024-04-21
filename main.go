@@ -29,6 +29,7 @@ func main() {
 	localAddr := flag.String("l", "localhost:5330", "监听的IP地址和端口号")
 	password := flag.String("p", "", "密码")
 	dotUpstream := flag.String("u", "dns.google:853", "上游dns服务")
+	timeout := flag.Int("w", 500, "等待每次回复的超时时间(毫秒)")
 
 	// 解析命令行参数
 	flag.Parse()
@@ -63,7 +64,13 @@ func main() {
 
 	switch *mode {
 	case "proxy":
-		proxy.Proxy(*localAddr, *serverAddr, key)
+		proxyObj := proxy.Proxy{
+			LocalAddr:  *localAddr,
+			ServerAddr: *serverAddr,
+			Key:        key,
+			Timeout:    *timeout,
+		}
+		proxyObj.Run()
 	case "server":
 		server.Server(*localAddr, key, *dotUpstream)
 	default:

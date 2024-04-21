@@ -10,7 +10,14 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func handle(data []byte, key []byte, proxyConn *net.UDPConn, clientAddr *net.UDPAddr, server *net.UDPAddr) error {
+type Proxy struct {
+	LocalAddr  string
+	ServerAddr string
+	Key        []byte
+	Timeout    int
+}
+
+func (p *Proxy) handle(data []byte, proxyConn *net.UDPConn, clientAddr *net.UDPAddr, server *net.UDPAddr) error {
 	query := new(dns.Msg)
 	// 尝试将字节数组解析为DNS消息。
 	err := query.Unpack(data)
@@ -32,14 +39,14 @@ func handle(data []byte, key []byte, proxyConn *net.UDPConn, clientAddr *net.UDP
 		return err
 	}
 
-	ciphertext, err := common.Encrypt(dnsBytes, key)
+	ciphertext, err := common.Encrypt(dnsBytes, p.Key)
 	if err != nil {
 		logrus.Errorln("加密出错:", err)
 		return err
 	}
 
 	for i := 1; i <= 3; i++ {
-		err = sentToServer(ciphertext, key, proxyConn, clientAddr, server)
+		err = p.sentToServer(ciphertext, proxyConn, clientAddr, server)
 		if err == nil {
 			break
 		}
@@ -53,8 +60,8 @@ func handle(data []byte, key []byte, proxyConn *net.UDPConn, clientAddr *net.UDP
 	return nil
 }
 
-func sentToServer(ciphertext []byte, key []byte, proxyConn *net.UDPConn, clientAddr *net.UDPAddr, server *net.UDPAddr) error {
-	serverConn, err := getServerConn(server)
+func (p *Proxy) sentToServer(ciphertext []byte, proxyConn *net.UDPConn, clientAddr *net.UDPAddr, server *net.UDPAddr) error {
+	serverConn, err := p.getServerConn(server)
 	if err != nil {
 		logrus.Errorln("服务器错误:", err)
 		return err
@@ -78,7 +85,7 @@ func sentToServer(ciphertext []byte, key []byte, proxyConn *net.UDPConn, clientA
 		return err
 	}
 
-	plaintext, err := common.Decrypt(buffer[:n], key)
+	plaintext, err := common.Decrypt(buffer[:n], p.Key)
 	if err != nil {
 		ciphertextB64 := base64.StdEncoding.EncodeToString(buffer[:n])
 		logrus.Errorln("解密出错:", err)
@@ -95,14 +102,14 @@ func sentToServer(ciphertext []byte, key []byte, proxyConn *net.UDPConn, clientA
 	return nil
 }
 
-func getServerConn(server *net.UDPAddr) (*net.UDPConn, error) {
+func (p *Proxy) getServerConn(server *net.UDPAddr) (*net.UDPConn, error) {
 	serverConn, err := net.DialUDP("udp", nil, server)
 	if err != nil {
 		return nil, err
 	}
 
 	// 设置读取超时时间
-	err = serverConn.SetReadDeadline(time.Now().Add(5 * time.Second))
+	err = serverConn.SetReadDeadline(time.Now().Add(time.Duration(p.Timeout) * time.Millisecond))
 	if err != nil {
 		logrus.Errorln("设置读取超时失败:", err)
 		return nil, err
@@ -111,13 +118,13 @@ func getServerConn(server *net.UDPAddr) (*net.UDPConn, error) {
 	return serverConn, nil
 }
 
-func Proxy(localAddr string, serverAddr string, key []byte) {
-	server, err := net.ResolveUDPAddr("udp", serverAddr)
+func (p *Proxy) Run() {
+	server, err := net.ResolveUDPAddr("udp", p.ServerAddr)
 	if err != nil {
 		logrus.Fatal(err)
 	}
 
-	proxy, err := net.ResolveUDPAddr("udp", localAddr)
+	proxy, err := net.ResolveUDPAddr("udp", p.LocalAddr)
 	if err != nil {
 		logrus.Fatal(err)
 	}
@@ -140,6 +147,6 @@ func Proxy(localAddr string, serverAddr string, key []byte) {
 			continue
 		}
 
-		go handle(buf[:n], key, proxyConn, client, server)
+		go p.handle(buf[:n], proxyConn, client, server)
 	}
 }
