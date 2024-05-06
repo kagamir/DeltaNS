@@ -3,6 +3,7 @@ package server
 import (
 	"crypto/tls"
 	"net"
+	"time"
 
 	"github.com/kagamir/DeltaNS/common"
 	"github.com/miekg/dns"
@@ -49,7 +50,10 @@ func handle(data []byte, key []byte, dotUpstream string, serverConn *net.UDPConn
 
 	logrus.Debugln("DNS消息:\n", query)
 
+	startTime := time.Now()
 	respMsg, err := queryRemote(query, dotUpstream)
+	elapsed := time.Since(startTime)
+	logrus.Infoln("上游查询耗时:", elapsed)
 	if err != nil {
 		// 返回查询错误
 		logrus.Errorln("查询错误", err)
