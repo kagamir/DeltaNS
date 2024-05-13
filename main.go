@@ -21,6 +21,12 @@ func getKey(password string) []byte {
 }
 
 func main() {
+	logrus.SetFormatter(&logrus.TextFormatter{
+		TimestampFormat: "2006-01-02 15:04:05",
+		FullTimestamp:   true,
+	})
+	logrus.SetOutput(os.Stdout)
+	logrus.SetLevel(logrus.DebugLevel)
 
 	// 定义命令行参数
 	loglevel := flag.String("loglevel", "info", "日志等级")
@@ -35,17 +41,10 @@ func main() {
 	flag.Parse()
 
 	if *password == "" {
-		logrus.Println("错误：密码参数 -p 不能为空")
+		logrus.Fatalln("错误：密码参数 -p 不能为空")
 		flag.Usage()
 		os.Exit(1)
 	}
-
-	logrus.SetFormatter(&logrus.TextFormatter{
-		TimestampFormat: "2006-01-02 15:04:05",
-		FullTimestamp:   true,
-	})
-	logrus.SetOutput(os.Stdout)
-	logrus.SetLevel(logrus.DebugLevel)
 
 	switch *loglevel {
 	case "info":
@@ -55,7 +54,7 @@ func main() {
 	case "warn":
 		logrus.SetLevel(logrus.WarnLevel)
 	default:
-		logrus.Println("错误：日志等级[info, debug, warn]")
+		logrus.Fatalln("loglevel in [info, debug, warn]")
 		flag.Usage()
 		os.Exit(1)
 	}

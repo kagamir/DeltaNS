@@ -12,7 +12,7 @@ import (
 
 func queryRemote(msg *dns.Msg, dotUpstream string) (*dns.Msg, error) {
 	// 初始化DNS over TLS连接
-	conn, err := dns.DialWithTLS("tcp", dotUpstream, &tls.Config{})
+	conn, err := dns.DialTimeoutWithTLS("tcp", dotUpstream, &tls.Config{}, time.Duration(5)*time.Second)
 	if err != nil {
 		return nil, err
 	}
@@ -36,7 +36,8 @@ func queryRemote(msg *dns.Msg, dotUpstream string) (*dns.Msg, error) {
 func handle(data []byte, key []byte, dotUpstream string, serverConn *net.UDPConn, proxyAddr *net.UDPAddr) error {
 	plaintext, err := common.Decrypt(data, key)
 	if err != nil {
-		logrus.Errorln("Decrypt Err:", err)
+		logrus.Warnf("Decrypt Err: %s - %s\n", err, proxyAddr.String())
+		logrus.Infoln("Decrypt Err:", data)
 		return err
 	}
 
@@ -56,7 +57,7 @@ func handle(data []byte, key []byte, dotUpstream string, serverConn *net.UDPConn
 	logrus.Infoln("上游查询耗时:", elapsed)
 	if err != nil {
 		// 返回查询错误
-		logrus.Errorln("查询错误", err)
+		logrus.Infoln("查询错误", err)
 		errResp := new(dns.Msg)
 		errResp.SetRcode(query, dns.RcodeServerFailure)
 		respMsg = errResp
@@ -99,7 +100,7 @@ func Server(serverAddr string, key []byte, dotUpstream string) {
 	}
 	defer serverConn.Close()
 
-	logrus.Infoln("DNS代理服务器启动，监听地址:", server)
+	logrus.Warnln("DNS代理服务器启动，监听地址:", server)
 
 	for {
 		var buf [1024]byte

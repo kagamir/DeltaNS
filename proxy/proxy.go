@@ -78,9 +78,9 @@ func (p *Proxy) sentToServer(ciphertext []byte, proxyConn *net.UDPConn, clientAd
 	n, _, err := serverConn.ReadFromUDP(buffer)
 	if err != nil {
 		if err, ok := err.(net.Error); ok && err.Timeout() {
-			logrus.Errorln("读取超时，服务器没有响应", err)
+			logrus.Infoln("读取超时，服务器没有响应", err)
 		} else {
-			logrus.Errorln("读取数据失败:", err)
+			logrus.Infoln("读取数据失败:", err)
 		}
 		return err
 	}
