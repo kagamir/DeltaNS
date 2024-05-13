@@ -135,7 +135,7 @@ func (p *Proxy) Run() {
 	}
 	defer proxyConn.Close()
 
-	logrus.Printf("DNS代理服务器启动，监听地址：%v\n", proxy)
+	logrus.Warnln("DNS代理服务器启动，监听地址：", proxy)
 
 	for {
 		var buf [512]byte
